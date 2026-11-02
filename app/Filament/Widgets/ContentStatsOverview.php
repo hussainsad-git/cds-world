@@ -15,6 +15,11 @@ class ContentStatsOverview extends StatsOverviewWidget
 {
     protected static ?int $sort = 1;
 
+    public static function canView(): bool
+    {
+        return auth()->user()?->can('manage_all_articles') || auth()->user()?->can('ViewAny:Event') || auth()->user()?->can('manage_seo');
+    }
+
     protected ?string $pollingInterval = null;
 
     protected function getStats(): array

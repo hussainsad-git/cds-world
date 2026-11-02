@@ -30,6 +30,7 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+            ->profile()
             ->brandName('CDS World Admin')
             ->colors(['primary' => Color::Indigo])
             ->sidebarCollapsibleOnDesktop()

@@ -17,6 +17,15 @@ class Popup extends Model implements HasMedia
 
     protected array $loggedAttributes = ['title', 'is_active', 'starts_at', 'ends_at'];
 
+    protected static function booted(): void
+    {
+        static::saving(function (self $popup) {
+            if (in_array($popup->type, ['text', 'html'], true) && $popup->content) {
+                $popup->content = clean($popup->content, 'popup');
+            }
+        });
+    }
+
     protected function casts(): array
     {
         return [
