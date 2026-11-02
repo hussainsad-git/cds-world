@@ -19,6 +19,10 @@ class Popup extends Model implements HasMedia
 
     protected static function booted(): void
     {
+        $flush = fn () => \Illuminate\Support\Facades\Cache::forget('popups.running');
+        static::saved($flush);
+        static::deleted($flush);
+
         static::saving(function (self $popup) {
             if (in_array($popup->type, ['text', 'html'], true) && $popup->content) {
                 $popup->content = clean($popup->content, 'popup');

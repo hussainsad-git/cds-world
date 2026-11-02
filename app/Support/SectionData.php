@@ -1,0 +1,88 @@
+<?php
+
+namespace App\Support;
+
+use App\Models\Article;
+use App\Models\Event;
+use App\Models\GalleryAlbum;
+use App\Models\GalleryItem;
+use App\Models\MediaCoverage;
+use App\Models\PageSection;
+use App\Models\TeamMember;
+use App\Models\Video;
+use Illuminate\Support\Collection;
+
+/** Loads the dynamic content behind automatic page sections (latest articles, events, etc.). */
+class SectionData
+{
+    public static function for(PageSection $s): array
+    {
+        $d = $s->data ?? [];
+        $limit = max(1, (int) ($d['limit'] ?? 6));
+
+        return match ($s->type) {
+            'ticker' => ['articles' => Article::live()->latestFirst()->limit($limit)->get(['id', 'title', 'slug', 'published_at'])],
+            'hero' => ['stats' => ($d['show_stats'] ?? true) ? static::stats() : null],
+            'latest_articles' => ['articles' => static::articles($limit, (bool) ($d['featured_first'] ?? false))],
+            'events' => ['events' => static::events($limit)],
+            'videos' => ['videos' => Video::live()->with(['media', 'author'])->orderByDesc('is_featured')->latestFirst()->limit($limit)->get()],
+            'media_coverage' => ['items' => MediaCoverage::live()->with(['outlet.media', 'media'])->orderByDesc('is_featured')->orderByDesc('published_on')->limit($limit)->get()],
+            'gallery' => ['items' => static::galleryHighlights($limit)],
+            'team' => ['members' => static::team($d)],
+            default => [],
+        };
+    }
+
+    public static function stats(): array
+    {
+        return [
+            ['value' => Article::live()->count(), 'label' => 'Research articles'],
+            ['value' => MediaCoverage::live()->count(), 'label' => 'Media features'],
+            ['value' => GalleryAlbum::live()->count(), 'label' => 'Photo galleries'],
+        ];
+    }
+
+    public static function articles(int $limit, bool $featuredFirst = false): Collection
+    {
+        $q = Article::live()->with(['author', 'categories', 'media']);
+        if ($featuredFirst) {
+            $q->orderByDesc('is_featured');
+        }
+
+        return $q->latestFirst()->limit($limit)->get();
+    }
+
+    public static function events(int $limit): Collection
+    {
+        $upcoming = Event::live()->upcoming()->with('media')->limit($limit)->get();
+        if ($upcoming->count() >= $limit) {
+            return $upcoming;
+        }
+        $past = Event::live()->past()->with('media')->limit($limit - $upcoming->count())->get();
+
+        return $upcoming->concat($past)->values();
+    }
+
+    public static function galleryHighlights(int $limit): Collection
+    {
+        return GalleryItem::query()->where('type', 'image')
+            ->whereHas('album', fn ($q) => $q->live())
+            ->with(['media', 'album'])->latest('id')->limit($limit)->get();
+    }
+
+    public static function team(array $d): Collection
+    {
+        $q = TeamMember::active()->with('media');
+        if (! empty($d['groups'])) {
+            $q->whereIn('group', (array) $d['groups']);
+        }
+        if (! empty($d['home_only'])) {
+            $q->where('show_on_home', true);
+        }
+        if (! empty($d['limit'])) {
+            $q->limit((int) $d['limit']);
+        }
+
+        return $q->get();
+    }
+}

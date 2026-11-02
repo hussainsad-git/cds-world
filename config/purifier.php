@@ -10,7 +10,7 @@ return [
         // Rich-text from the admin editors: structural + text formatting only. No scripts, iframes or inline styles.
         'default' => [
             'HTML.Doctype' => 'HTML 4.01 Transitional',
-            'HTML.Allowed' => 'h2[id],h3[id],h4,p,br,hr,strong,b,em,i,u,s,sub,sup,blockquote,ul,ol,li,a[href|title|target|rel],img[src|alt|title|width|height],figure,figcaption,table,thead,tbody,tr,th[colspan|rowspan],td[colspan|rowspan],pre,code',
+            'HTML.Allowed' => 'h2[id],h3[id],h4,p,br,hr,strong,b,em,i,u,s,sub,sup,blockquote,ul,ol,li,a[href|title|target|rel],img[src|alt|title|width|height],table,thead,tbody,tr,th[colspan|rowspan],td[colspan|rowspan],pre,code',
             'HTML.TargetBlank' => true,
             'HTML.TargetNoopener' => true,
             'CSS.AllowedProperties' => '',
@@ -27,15 +27,7 @@ return [
             'URI.AllowedSchemes' => ['http' => true, 'https' => true, 'mailto' => true, 'tel' => true],
         ],
     ],
-    'custom_definition' => [
-        'id' => 'html5-definitions',
-        'rev' => 1,
-        'debug' => false,
-        'elements' => [
-            ['figure', 'Block', 'Optional: (figcaption, Flow) | (Flow, figcaption) | Flow', 'Common'],
-            ['figcaption', 'Inline', 'Flow', 'Common'],
-        ],
-    ],
+    'custom_definition' => null,
     'custom_attributes' => [],
     'custom_elements' => [],
 ];

@@ -18,7 +18,7 @@ class NavigationItem extends Model
 
     protected static function booted(): void
     {
-        $flush = fn () => Cache::forget('nav.menus');
+        $flush = fn () => Cache::forget('nav.menus'); Cache::forget('nav.menus.public');
         static::saved($flush);
         static::deleted($flush);
     }

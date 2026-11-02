@@ -26,6 +26,17 @@ class RolePermissionSeeder extends Seeder
         return array_map(fn ($a) => "$a:$model", $actions);
     }
 
+    /** @param array<int, string> $models */
+    private function many(array $models, array $actions = self::ACTIONS): array
+    {
+        $out = [];
+        foreach ($models as $model) {
+            $out = array_merge($out, $this->crud($model, $actions));
+        }
+
+        return $out;
+    }
+
     public function run(): void
     {
         app(PermissionRegistrar::class)->forgetCachedPermissions();
@@ -36,7 +47,7 @@ class RolePermissionSeeder extends Seeder
         $matrix = [
             'administrator' => array_merge(
                 $this->crud('Article'),
-                ...array_map(fn ($m) => $this->crud($m), array_merge($content, $engagement)),
+                $this->many(array_merge($content, $engagement)),
                 $this->crud('User', ['ViewAny', 'View', 'Create', 'Update']),
                 ['manage_all_articles', 'publish_article', 'approve_article', 'feature_article', 'schedule_article', 'manage_seo', 'manage_redirects', 'manage_theme', 'manage_settings', 'view_activity_log'],
             ),
@@ -53,7 +64,7 @@ class RolePermissionSeeder extends Seeder
             ),
             'seo_manager' => array_merge(
                 $this->crud('Article', self::READ), // viewing only; SEO edits happen from the SEO dashboard links
-                array_merge(...array_map(fn ($m) => $this->crud($m, ['ViewAny', 'View', 'Update']), ['Page', 'Category', 'Event', 'MediaCoverage', 'Video', 'GalleryAlbum', 'TeamMember'])),
+                $this->many(['Page', 'Category', 'Event', 'MediaCoverage', 'Video', 'GalleryAlbum', 'TeamMember'], ['ViewAny', 'View', 'Update']),
                 $this->crud('Redirect'),
                 ['manage_all_articles', 'manage_seo', 'manage_redirects'],
             ),

@@ -20,6 +20,7 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        \Illuminate\Pagination\Paginator::useBootstrapFive();
         Schema::defaultStringLength(191);
 
         Article::observe(ArticleObserver::class);

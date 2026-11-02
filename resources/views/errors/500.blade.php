@@ -1,0 +1,2 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Something went wrong</title><meta name="robots" content="noindex"></head>
+<body style="font-family:system-ui,sans-serif;text-align:center;padding:12vh 1rem"><h1>Something went wrong</h1><p>We are working on it. Please try again shortly.</p><p><a href="/">Back to homepage</a></p></body></html>
