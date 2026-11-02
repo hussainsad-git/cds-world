@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # CDS World: update the app on the cPanel server. Run from anywhere: bash deploy/deploy.sh
-# Touches ONLY this app's directory. Uses explicit PHP 8.3 so other sites' PHP versions are unaffected.
+# Touches ONLY this app's directory. Uses explicit PHP 8.4 so other sites' PHP versions are unaffected.
 set -euo pipefail
 
 APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-PHP="${PHP_BIN:-/opt/cpanel/ea-php83/root/usr/bin/php}"
+PHP="${PHP_BIN:-/opt/cpanel/ea-php84/root/usr/bin/php}"
 COMPOSER="${COMPOSER_BIN:-/usr/local/bin/composer}"
 BRANCH="${BRANCH:-main}"
 

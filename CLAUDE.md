@@ -4,14 +4,14 @@ Full requirements: `docs/SPEC.md` (source of truth). Architecture/schema/RBAC de
 Implement one SPEC section per session, commit, then `/clear`. Do not re-read the whole spec.
 
 ## Stack
-Laravel 12, PHP 8.3, MySQL, Filament v4 (admin at /admin), Filament Shield + spatie/laravel-permission (RBAC),
+Laravel 12, PHP 8.4 (lockfile needs >= 8.4), MySQL, Filament v4 (admin at /admin), Filament Shield + spatie/laravel-permission (RBAC),
 spatie medialibrary (gd driver, WebP), spatie activitylog, laravel-sitemap, laravel-sluggable, mews/purifier.
 Public site: Blade + Bootstrap 5 + jQuery (no Node build on server; built assets are committed).
 
 ## Hard rules
 - ISOLATION: this app shares a cPanel account (user `websgene`) with ~35 other sites incl. hisabifi, pos-aljabbal, leadflow.
   Never touch other directories, DBs, crontab lines or global composer. Own DB/user, own .env, prefixes `cds_`.
-- Production PHP: `/opt/cpanel/ea-php83/root/usr/bin/php`. No Node on server. Disk is 96% full: cap uploads
+- Production PHP: `/opt/cpanel/ea-php84/root/usr/bin/php`. No Node on server. Disk is 96% full: cap uploads
   (video 200 MB, images resized), default videos to YouTube/Facebook embeds.
 - Keep existing public URLs: /articles /events /media-coverage /gallery /about /who-we-are /board-of-directors
   /contact /privacy-policy /terms-conditions (no redirects needed for these).
