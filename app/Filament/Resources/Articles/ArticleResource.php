@@ -131,7 +131,7 @@ class ArticleResource extends Resource
                     Select::make('author_id')->label('Author')->relationship('author', 'name')->searchable()->preload()->required()
                         ->default(fn () => auth()->id())->visible($can('manage_all_articles')),
                     Select::make('event_id')->label('Related event')->relationship('event', 'title')->searchable()->preload(),
-                    Select::make('categories')->relationship('categories', 'name', fn (Builder $q) => $q->where('type', CategoryType::Article->value)->where('is_active', true)->orderBy('sort_order'))
+                    Select::make('categories')->relationship('categories', 'name', fn (Builder $query) => $query->where('type', CategoryType::Article->value)->where('is_active', true)->orderBy('sort_order'))
                         ->multiple()->preload()->searchable()->required(),
                     Select::make('tags')->relationship('tags', 'name')->multiple()->preload()->searchable()
                         ->createOptionForm([TextInput::make('name')->required()->maxLength(60)]),
@@ -182,8 +182,13 @@ class ArticleResource extends Resource
             ])
             ->filters([
                 SelectFilter::make('status')->options(ContentStatus::options()),
-                SelectFilter::make('categories')->relationship('categories', 'name', fn (Builder $q) => $q->where('type', CategoryType::Article->value))->label('Category')->multiple()->preload(),
-                SelectFilter::make('author_id')->relationship('author', 'name')->label('Author')->searchable()->preload()
+                SelectFilter::make('category')->label('Category')->multiple()
+                    ->options(fn () => \App\Models\Category::query()->where('type', CategoryType::Article->value)->orderBy('name')->pluck('name', 'id')->all())
+                    ->query(fn (Builder $query, array $data) => filled($data['values'] ?? null)
+                        ? $query->whereHas('categories', fn ($q) => $q->whereIn('categories.id', $data['values']))
+                        : $query),
+                SelectFilter::make('author_id')->label('Author')->searchable()
+                    ->options(fn () => \App\Models\User::query()->orderBy('name')->pluck('name', 'id')->all())
                     ->visible(fn () => auth()->user()?->can('manage_all_articles') ?? false),
                 Filter::make('published_between')->label('Published')->schema([
                     DatePicker::make('from'),
