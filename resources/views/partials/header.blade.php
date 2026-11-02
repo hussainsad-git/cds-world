@@ -4,6 +4,10 @@
     $social = collect(['facebook' => 'Facebook', 'instagram' => 'Instagram', 'x' => 'X', 'youtube' => 'YouTube', 'linkedin' => 'LinkedIn'])
         ->filter(fn ($l, $k) => \App\Support\Site::get('social', $k));
 @endphp
+<div class="topbar"><div class="container-cds topbar-inner">
+    <span>{{ \App\Support\Site::get('general', 'tagline_short', 'Independent insights for sustainable development') }}</span>
+    <span class="topbar-social">@foreach ($social as $k => $label)<a href="{{ \App\Support\Site::get('social', $k) }}" target="_blank" rel="noopener">{{ $label }}</a>@endforeach</span>
+</div></div>
 <header class="site-header header-{{ \App\Support\Site::get('theme', 'header_style', 'light') }}">
     <div class="container-cds header-inner">
         <a class="brand" href="{{ url('/') }}" aria-label="{{ \App\Support\Site::name() }} home">

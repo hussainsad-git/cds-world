@@ -1,9 +1,9 @@
 @php
     $bg = !empty($d['background_image']) ? \App\Support\Site::file($d['background_image']) : null;
 @endphp
-<section class="hero {{ $bg ? 'has-bg' : '' }}" @if($bg) style="background-image:linear-gradient(105deg,rgba(0,0,0,.72),rgba(0,0,0,.35)),url('{{ $bg }}')" @endif>
+<section class="hero {{ $bg ? 'has-bg' : 'hero-light' }}" @if($bg) style="background-image:linear-gradient(105deg,rgba(0,0,0,.72),rgba(0,0,0,.35)),url('{{ $bg }}')" @endif>
     <div class="container-cds hero-inner">
-        <p class="eyebrow">Think tank · Pakistan</p>
+        <p class="eyebrow hero-pill">Think tank · Pakistan</p>
         <h1 class="hero-title">{{ $section->heading }}</h1>
         @if (!empty($d['description']))<p class="hero-lead">{{ $d['description'] }}</p>@endif
         <div class="hero-actions">
