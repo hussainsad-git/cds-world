@@ -215,6 +215,7 @@ class ImportLiveSite extends Command
                 'status' => ContentStatus::Published,
                 'published_at' => $this->when($p),
                 'author_id' => $this->author($p)?->id,
+                'featured_alt' => $this->text($p['title']['rendered']),
             ]);
             $a->save();
             $this->attachTaxonomy($a, $p, CategoryType::Article, 'Research & Analysis');
@@ -244,6 +245,7 @@ class ImportLiveSite extends Command
                 'starts_at' => $when,
                 'status' => ContentStatus::Published,
                 'published_at' => $when,
+                'banner_alt' => $this->text($p['title']['rendered']),
             ]);
             $e->save();
             $this->attachTaxonomy($e, $p, CategoryType::Event, 'Events');
@@ -287,6 +289,7 @@ class ImportLiveSite extends Command
                 'published_on' => $this->when($p)->toDateString(),
                 'status' => ContentStatus::Published,
                 'published_at' => $this->when($p),
+                'thumb_alt' => $title,
             ]);
             $c->save();
             $this->attachTaxonomy($c, $p, CategoryType::MediaCoverage, 'Media Coverage');
