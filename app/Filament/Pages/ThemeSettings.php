@@ -24,10 +24,10 @@ class ThemeSettings extends BaseSettingsPage
 
     protected static ?int $navigationSort = 4;
 
-    public const FONTS = ['Source Serif 4', 'Playfair Display', 'Merriweather', 'Lora', 'Libre Baskerville', 'Inter', 'Source Sans 3', 'Open Sans', 'Roboto', 'Lato', 'Poppins'];
+    public const FONTS = ['Fraunces', 'Source Serif 4', 'Playfair Display', 'Merriweather', 'Lora', 'Libre Baskerville', 'Inter', 'Source Sans 3', 'Open Sans', 'Roboto', 'Lato', 'Poppins'];
 
     public const PRESETS = [
-        'cds-green' => ['label' => 'CDS Green (matches current site)', 'color_primary' => '#01411c', 'color_secondary' => '#2e6b4a', 'color_accent' => '#c49a2c', 'color_bg' => '#ffffff', 'color_bg_alt' => '#f4f7f3', 'color_text' => '#1b241f', 'color_muted' => '#56625b', 'font_heading' => 'Source Serif 4', 'font_body' => 'Inter'],
+        'cds-green' => ['label' => 'CDS Green (matches current site)', 'color_primary' => '#01411c', 'color_secondary' => '#0b7a3e', 'color_accent' => '#8fe0b1', 'color_bg' => '#ffffff', 'color_bg_alt' => '#eaf3ec', 'color_text' => '#212529', 'color_muted' => '#56625b', 'font_heading' => 'Fraunces', 'font_body' => 'Inter'],
         'institutional-navy' => ['label' => 'Institutional Navy', 'color_primary' => '#12284c', 'color_secondary' => '#1f6f8b', 'color_accent' => '#b8860b', 'color_bg' => '#ffffff', 'color_bg_alt' => '#f5f7fa', 'color_text' => '#1d2433', 'color_muted' => '#5b6475', 'font_heading' => 'Source Serif 4', 'font_body' => 'Inter'],
         'slate-crimson' => ['label' => 'Slate & Crimson', 'color_primary' => '#1f2937', 'color_secondary' => '#475569', 'color_accent' => '#9b1c31', 'color_bg' => '#ffffff', 'color_bg_alt' => '#f6f6f7', 'color_text' => '#111827', 'color_muted' => '#5f6673', 'font_heading' => 'Playfair Display', 'font_body' => 'Inter'],
         'modern-teal' => ['label' => 'Modern Teal', 'color_primary' => '#0f4c5c', 'color_secondary' => '#2a7f8f', 'color_accent' => '#d95d0f', 'color_bg' => '#ffffff', 'color_bg_alt' => '#f1f7f8', 'color_text' => '#14262b', 'color_muted' => '#586a70', 'font_heading' => 'Merriweather', 'font_body' => 'Source Sans 3'],

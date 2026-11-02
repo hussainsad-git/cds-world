@@ -32,3 +32,4 @@ Thumbs.db
 /public/fonts/filament
 # Local-only helpers
 /tools
+/start-server.bat

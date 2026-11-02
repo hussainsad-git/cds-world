@@ -1,12 +1,13 @@
 /* CDS World public site. Theme values come from /theme.css (CSS variables set in the admin). */
 @font-face{font-family:"Inter";src:url("../fonts/site/inter-latin-wght-normal.woff2") format("woff2");font-weight:100 900;font-style:normal;font-display:swap}
+@font-face{font-family:"Fraunces";src:url("../fonts/site/fraunces-latin-wght-normal.woff2") format("woff2");font-weight:100 900;font-style:normal;font-display:swap}
 @font-face{font-family:"Source Serif 4";src:url("../fonts/site/source-serif-4-latin-400-normal.woff2") format("woff2");font-weight:400;font-style:normal;font-display:swap}
 @font-face{font-family:"Source Serif 4";src:url("../fonts/site/source-serif-4-latin-400-italic.woff2") format("woff2");font-weight:400;font-style:italic;font-display:swap}
 @font-face{font-family:"Source Serif 4";src:url("../fonts/site/source-serif-4-latin-600-normal.woff2") format("woff2");font-weight:600;font-style:normal;font-display:swap}
 @font-face{font-family:"Source Serif 4";src:url("../fonts/site/source-serif-4-latin-700-normal.woff2") format("woff2");font-weight:700;font-style:normal;font-display:swap}
 
-:root{--c-primary:#01411c;--c-secondary:#2e6b4a;--c-accent:#c49a2c;--c-bg:#fff;--c-bg-alt:#f4f7f3;--c-text:#1b241f;--c-muted:#56625b;--c-line:#e3e8e4;
---font-heading:"Source Serif 4",Georgia,serif;--font-body:"Inter",system-ui,sans-serif;--fs-base:17px;--lh-base:1.65;--radius:6px;--container:1200px;--btn-radius:6px;--shadow:0 1px 2px rgba(16,24,20,.06),0 6px 20px rgba(16,24,20,.06)}
+:root{--c-primary:#01411c;--c-secondary:#0b7a3e;--c-accent:#8fe0b1;--c-bg:#fff;--c-bg-alt:#eaf3ec;--c-text:#1b241f;--c-muted:#56625b;--c-line:#d3e0d6;
+--font-heading:"Fraunces",Georgia,serif;--font-body:"Inter",system-ui,sans-serif;--fs-base:17px;--lh-base:1.65;--radius:16px;--container:1200px;--btn-radius:8px;--shadow:0 1px 2px rgba(16,24,20,.06),0 6px 20px rgba(16,24,20,.06)}
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
 body{margin:0;background:var(--c-bg);color:var(--c-text);font-family:var(--font-body);font-size:var(--fs-base);line-height:var(--lh-base);-webkit-font-smoothing:antialiased}
@@ -252,3 +253,32 @@ a.chip:hover{background:var(--c-primary);color:#fff}
 .cds-popup-card img{width:100%;border-radius:var(--radius)}
 .cds-popup-title{font-size:1.4rem;margin:0 0 .8rem}
 .cds-popup-close{position:absolute;right:10px;top:6px;border:0;background:transparent;font-size:2rem;line-height:1;cursor:pointer;color:var(--c-muted)}
+
+/* ---- alignment with live cdsworld.org ---- */
+.announcement{background:#01411c;color:#fff;text-align:left}
+.announcement a{color:#fff}
+.site-header{border-bottom:1px solid var(--c-line)}
+.primary-nav>ul>li>a{border-radius:8px;font-weight:500}
+.btn{border-radius:8px;font-weight:600;transition:transform .2s,background .2s}
+.btn:hover{transform:translateY(-2px)}
+.btn-cds{border-color:transparent}
+.eyebrow{color:var(--c-secondary)}
+.hero .eyebrow,.about-band .eyebrow,.page-hero.dark .eyebrow{color:#8fe0b1}
+.hero{background:linear-gradient(rgba(1,65,28,.93),rgba(1,50,22,.88)),var(--hero-img,none) center/cover,#01411c;position:relative;overflow:hidden}
+.hero:after{content:"";position:absolute;right:-160px;top:-160px;width:520px;height:520px;border-radius:50%;border:70px solid rgba(255,255,255,.05);pointer-events:none}
+.page-hero{background:linear-gradient(rgba(1,65,28,.94),rgba(1,50,22,.9));border:0;color:#fff;position:relative;overflow:hidden}
+.page-hero h1,.page-hero .lead{color:#fff}.page-hero .lead{color:#cfe6d6}
+.page-hero .cds-breadcrumb,.page-hero a{color:#cfe6d6}
+.ticker{background:var(--c-bg-alt);color:var(--c-text)}
+.ticker a{color:var(--c-text)}
+.ticker-label{background:#01411c;color:#fff}
+.focus-card,.article-card,.event-card,.video-card{border-radius:16px;border-color:var(--c-line);transition:transform .3s,box-shadow .3s,background .3s}
+.focus-card:hover{background:#01411c;color:#fff;transform:translateY(-8px)}
+.focus-card:hover h3,.focus-card:hover p,.focus-card:hover .focus-num{color:#fff}
+.article-card:hover,.event-card:hover,.video-card:hover{transform:translateY(-8px);box-shadow:0 20px 40px rgba(1,65,28,.18)}
+.about-band,.newsletter-band{border-radius:0}
+.site-footer{background:#052a14;color:#cfe6d6}
+.site-footer .footer-heading{color:#fff;text-transform:none;letter-spacing:0;font-family:var(--font-heading);font-size:1.05rem}
+.site-footer a{color:#cfe6d6}.site-footer a:hover{color:#fff;text-decoration:none}
+.nav-toggle{border-radius:8px}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}

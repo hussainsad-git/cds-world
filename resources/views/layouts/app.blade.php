@@ -2,9 +2,9 @@
     $siteName = \App\Support\Site::name();
     $favicon = \App\Support\Site::file(\App\Support\Site::get('general', 'favicon'));
     $themeVersion = substr(md5(json_encode(\App\Models\WebsiteSetting::group('theme'))), 0, 8);
-    $headingFont = \App\Support\Site::get('theme', 'font_heading', 'Source Serif 4');
+    $headingFont = \App\Support\Site::get('theme', 'font_heading', 'Fraunces');
     $bodyFont = \App\Support\Site::get('theme', 'font_body', 'Inter');
-    $selfHosted = ['Source Serif 4', 'Inter'];
+    $selfHosted = ['Fraunces', 'Source Serif 4', 'Inter'];
     $extraFonts = collect([$headingFont, $bodyFont])->unique()->reject(fn ($f) => in_array($f, $selfHosted))->values();
 @endphp
 <!doctype html>
