@@ -33,7 +33,8 @@ class ImportLiveSite extends Command
     protected $signature = 'cds:import-live
         {--only=* : Sections to import: articles, events, media, gallery, team}
         {--limit=0 : Max records per section (0 = all shown on the live site)}
-        {--no-images : Skip image downloads}';
+        {--no-images : Skip image downloads}
+        {--fresh : Delete previously imported content before importing}';
 
     protected $description = 'Import articles, events, media coverage, galleries and team from the live cdsworld.org site';
 
@@ -48,6 +49,22 @@ class ImportLiveSite extends Command
         $this->images = ! $this->option('no-images');
         $this->limit = (int) $this->option('limit');
         $only = $this->option('only') ?: ['team', 'articles', 'events', 'media', 'gallery'];
+
+        if ($this->option('fresh')) {
+            $this->components->warn('Clearing previously imported content');
+            \Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=0');
+            foreach ([
+                'media', 'gallery_items', 'gallery_albums', 'media_coverage', 'media_outlets',
+                'event_speakers', 'event_registrations', 'events', 'article_revisions', 'articles',
+                'team_members', 'categoryables', 'taggables',
+            ] as $table) {
+                if (\Illuminate\Support\Facades\Schema::hasTable($table)) {
+                    \Illuminate\Support\Facades\DB::table($table)->truncate();
+                }
+            }
+            \Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=1');
+            User::where('email', 'like', '%@import.cdsworld.invalid')->forceDelete();
+        }
 
         foreach ($only as $section) {
             $this->components->info('Importing '.$section);
@@ -167,7 +184,17 @@ class ImportLiveSite extends Command
             return;
         }
         try {
-            $media = $model->addMediaFromUrl($url)->toMediaCollection($collection);
+            // allow_url_fopen is off on many shared hosts, so fetch over curl rather than
+            // letting media-library open the URL as a stream.
+            $res = $this->http()->get($url);
+            if (! $res->successful()) {
+                throw new \RuntimeException('HTTP '.$res->status());
+            }
+            $name = urldecode(basename((string) parse_url($url, PHP_URL_PATH))) ?: 'image.jpg';
+            $media = $model->addMediaFromString($res->body())
+                ->usingFileName($name)
+                ->usingName(pathinfo($name, PATHINFO_FILENAME))
+                ->toMediaCollection($collection);
             if ($alt) {
                 $media->setCustomProperty('alt', $alt)->save();
             }
