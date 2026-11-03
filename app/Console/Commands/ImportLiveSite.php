@@ -127,10 +127,10 @@ class ImportLiveSite extends Command
         return trim(html_entity_decode(strip_tags((string) $html), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
     }
 
-    /** Column-safe title: WordPress titles can exceed varchar(255). */
+    /** Column-safe title: Schema::defaultStringLength(191) applies to every string column. */
     private function title(string $value): string
     {
-        return Str::limit($value, 240, '');
+        return Str::limit($value, 180, '');
     }
 
     private function when(array $p): Carbon
@@ -231,6 +231,7 @@ class ImportLiveSite extends Command
     private function articles(): void
     {
         foreach ($this->slugsFrom('/articles', 'articles') as $slug) {
+          try {
             if (Article::withTrashed()->where('slug', $slug)->exists()) {
                 $this->line("  skip $slug");
                 continue;
@@ -255,12 +256,16 @@ class ImportLiveSite extends Command
             $this->attachImage($a, $this->featuredUrl($p), 'featured', $a->title);
             $this->seoFrom($a, $p);
             $this->line("  + article: {$a->title}");
+          } catch (Throwable $e) {
+            $this->components->warn('  skipped article '.$slug.' — '.Str::limit($e->getMessage(), 110));
+          }
         }
     }
 
     private function events(): void
     {
         foreach ($this->slugsFrom('/events', 'events') as $slug) {
+          try {
             if (Event::withTrashed()->where('slug', $slug)->exists()) {
                 $this->line("  skip $slug");
                 continue;
@@ -284,12 +289,16 @@ class ImportLiveSite extends Command
             $this->attachTaxonomy($e, $p, CategoryType::Event, 'Events');
             $this->attachImage($e, $this->featuredUrl($p), 'banner', $e->title);
             $this->line("  + event: {$e->title}");
+          } catch (Throwable $ex) {
+            $this->components->warn('  skipped event '.$slug.' — '.Str::limit($ex->getMessage(), 110));
+          }
         }
     }
 
     private function media(): void
     {
         foreach ($this->slugsFrom('/media-coverage', 'media') as $slug) {
+          try {
             if (MediaCoverage::withTrashed()->where('slug', $slug)->exists()) {
                 $this->line("  skip $slug");
                 continue;
@@ -311,7 +320,7 @@ class ImportLiveSite extends Command
             }
             $title = $this->title($this->text($p['title']['rendered']));
             $outletName = preg_match('~(?:coverage by|by)\s+([A-Z][\w .&\'-]{2,40})$~i', $title, $mm) ? trim($mm[1]) : (parse_url($source, PHP_URL_HOST) ?: 'CDS World');
-            $outlet = MediaOutlet::firstOrCreate(['name' => Str::limit(Str::title(preg_replace('~^www\.~', '', $outletName)), 120, '')], ['is_active' => true]);
+            $outlet = MediaOutlet::firstOrCreate(['name' => Str::limit(Str::title(preg_replace('~^www\.~', '', $outletName)), 110, '')], ['is_active' => true]);
 
             $c = new MediaCoverage([
                 'media_outlet_id' => $outlet->id,
@@ -328,12 +337,16 @@ class ImportLiveSite extends Command
             $this->attachTaxonomy($c, $p, CategoryType::MediaCoverage, 'Media Coverage');
             $this->attachImage($c, $this->featuredUrl($p), 'thumbnail', $title);
             $this->line("  + media: {$c->headline}");
+          } catch (Throwable $e) {
+            $this->components->warn('  skipped media '.$slug.' — '.Str::limit($e->getMessage(), 110));
+          }
         }
     }
 
     private function gallery(): void
     {
         foreach ($this->slugsFrom('/gallery', 'gallery') as $slug) {
+          try {
             if (GalleryAlbum::withTrashed()->where('slug', $slug)->exists()) {
                 $this->line("  skip $slug");
                 continue;
@@ -371,6 +384,9 @@ class ImportLiveSite extends Command
                 $this->attachImage($item, $url, 'file');
             }
             $this->line("  + album: {$title} ({$urls->count()} images)");
+          } catch (Throwable $e) {
+            $this->components->warn('  skipped album '.$slug.' — '.Str::limit($e->getMessage(), 110));
+          }
         }
     }
 
@@ -427,7 +443,7 @@ class ImportLiveSite extends Command
         $m = TeamMember::create([
             'name' => $this->title($name),
             'slug' => Str::slug($name),
-            'designation' => $role ? Str::limit($role, 240, '') : null,
+            'designation' => $role ? Str::limit($role, 180, '') : null,
             'bio' => $bio ?: null,
             'group' => $group,
             'sort_order' => $order,
