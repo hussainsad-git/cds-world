@@ -33,3 +33,4 @@ Thumbs.db
 # Local-only helpers
 /tools
 /start-server.bat
+cds-update.bundle

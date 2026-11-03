@@ -127,6 +127,12 @@ class ImportLiveSite extends Command
         return trim(html_entity_decode(strip_tags((string) $html), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
     }
 
+    /** Column-safe title: WordPress titles can exceed varchar(255). */
+    private function title(string $value): string
+    {
+        return Str::limit($value, 240, '');
+    }
+
     private function when(array $p): Carbon
     {
         return Carbon::parse($p['date_gmt'] ?? $p['date'], 'UTC')->setTimezone(config('app.timezone'));
@@ -234,7 +240,7 @@ class ImportLiveSite extends Command
                 continue;
             }
             $a = new Article([
-                'title' => $this->text($p['title']['rendered']),
+                'title' => $this->title($this->text($p['title']['rendered'])),
                 'slug' => $slug,
                 'excerpt' => Str::limit($this->text($p['excerpt']['rendered']), 480, '…'),
                 'body' => $p['content']['rendered'],
@@ -242,7 +248,7 @@ class ImportLiveSite extends Command
                 'status' => ContentStatus::Published,
                 'published_at' => $this->when($p),
                 'author_id' => $this->author($p)?->id,
-                'featured_alt' => $this->text($p['title']['rendered']),
+                'featured_alt' => $this->title($this->text($p['title']['rendered'])),
             ]);
             $a->save();
             $this->attachTaxonomy($a, $p, CategoryType::Article, 'Research & Analysis');
@@ -265,14 +271,14 @@ class ImportLiveSite extends Command
             }
             $when = $this->when($p);
             $e = new Event([
-                'title' => $this->text($p['title']['rendered']),
+                'title' => $this->title($this->text($p['title']['rendered'])),
                 'slug' => $slug,
                 'summary' => Str::limit($this->text($p['excerpt']['rendered']), 480, '…'),
                 'description' => \Mews\Purifier\Facades\Purifier::clean($p['content']['rendered']),
                 'starts_at' => $when,
                 'status' => ContentStatus::Published,
                 'published_at' => $when,
-                'banner_alt' => $this->text($p['title']['rendered']),
+                'banner_alt' => $this->title($this->text($p['title']['rendered'])),
             ]);
             $e->save();
             $this->attachTaxonomy($e, $p, CategoryType::Event, 'Events');
@@ -303,9 +309,9 @@ class ImportLiveSite extends Command
                     }
                 }
             }
-            $title = $this->text($p['title']['rendered']);
+            $title = $this->title($this->text($p['title']['rendered']));
             $outletName = preg_match('~(?:coverage by|by)\s+([A-Z][\w .&\'-]{2,40})$~i', $title, $mm) ? trim($mm[1]) : (parse_url($source, PHP_URL_HOST) ?: 'CDS World');
-            $outlet = MediaOutlet::firstOrCreate(['name' => Str::title(preg_replace('~^www\.~', '', $outletName))], ['is_active' => true]);
+            $outlet = MediaOutlet::firstOrCreate(['name' => Str::limit(Str::title(preg_replace('~^www\.~', '', $outletName)), 120, '')], ['is_active' => true]);
 
             $c = new MediaCoverage([
                 'media_outlet_id' => $outlet->id,
@@ -336,7 +342,7 @@ class ImportLiveSite extends Command
                 $this->components->warn("  not found in source: $slug");
                 continue;
             }
-            $title = $this->text($p['title']['rendered']);
+            $title = $this->title($this->text($p['title']['rendered']));
             $album = new GalleryAlbum([
                 'title' => $title,
                 'slug' => $slug,
@@ -419,9 +425,9 @@ class ImportLiveSite extends Command
             return;
         }
         $m = TeamMember::create([
-            'name' => $name,
+            'name' => $this->title($name),
             'slug' => Str::slug($name),
-            'designation' => $role ?: null,
+            'designation' => $role ? Str::limit($role, 240, '') : null,
             'bio' => $bio ?: null,
             'group' => $group,
             'sort_order' => $order,
