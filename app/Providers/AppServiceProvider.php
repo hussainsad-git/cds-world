@@ -23,6 +23,9 @@ class AppServiceProvider extends ServiceProvider
         \Illuminate\Pagination\Paginator::useBootstrapFive();
         Schema::defaultStringLength(191);
 
+        // Super administrators bypass every gate, including permissions added later.
+        Gate::before(fn ($user, $ability) => $user->hasRole('super_admin') ? true : null);
+
         Article::observe(ArticleObserver::class);
         Gate::policy(Article::class, ArticlePolicy::class);
         Gate::policy(Role::class, RolePolicy::class);

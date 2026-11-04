@@ -39,6 +39,9 @@ class RolePermissionSeeder extends Seeder
 
     public function run(): void
     {
+        // Super administrator always holds every permission that exists.
+        Role::findOrCreate('super_admin', 'web')->syncPermissions(Permission::all());
+
         app(PermissionRegistrar::class)->forgetCachedPermissions();
 
         $content = ['Page', 'Category', 'Event', 'MediaCoverage', 'MediaOutlet', 'Video', 'GalleryAlbum', 'TeamMember', 'NavigationMenu', 'Popup', 'Redirect'];
