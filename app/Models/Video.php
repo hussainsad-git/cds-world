@@ -57,6 +57,11 @@ class Video extends Model implements HasMedia
         return $this->belongsTo(User::class, 'author_id');
     }
 
+    public function event(): BelongsTo
+    {
+        return $this->belongsTo(Event::class);
+    }
+
     /** Extract the provider video id from a pasted URL (or return null when unrecognised). */
     public static function parseExternalId(VideoSource|string|null $source, string $url): ?string
     {
