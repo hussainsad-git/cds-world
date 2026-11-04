@@ -2,7 +2,9 @@
 
 namespace App\Support;
 
+use App\Enums\CategoryType;
 use App\Models\Article;
+use App\Models\Category;
 use App\Models\Event;
 use App\Models\GalleryAlbum;
 use App\Models\GalleryItem;
@@ -26,6 +28,7 @@ class SectionData
                 'stats' => ($d['show_stats'] ?? true) ? static::stats() : null,
                 'collage' => static::heroCollage($d),
             ],
+            'research_focus' => ['items' => static::focusItems($d)],
             'latest_articles' => ['articles' => static::articles($limit, (bool) ($d['featured_first'] ?? false))],
             'events' => ['events' => static::events($limit)],
             'videos' => ['videos' => Video::live()->with(['media', 'author'])->orderByDesc('is_featured')->latestFirst()->limit($limit)->get()],
@@ -34,6 +37,41 @@ class SectionData
             'team' => ['members' => static::team($d)],
             default => [],
         };
+    }
+
+    /**
+     * Focus areas as configured in the page builder; when none are set we fall back to the
+     * live article categories so the section is never rendered empty.
+     *
+     * @return array<int, array{title: string, description: ?string, url: string}>
+     */
+    public static function focusItems(array $d): array
+    {
+        $items = collect($d['items'] ?? [])
+            ->filter(fn ($i) => filled($i['title'] ?? null))
+            ->map(fn ($i) => [
+                'title' => $i['title'],
+                'description' => $i['description'] ?? null,
+                'url' => $i['url'] ?: '/articles',
+            ])
+            ->values();
+
+        if ($items->isNotEmpty()) {
+            return $items->all();
+        }
+
+        return Category::ofType(CategoryType::Article)
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->limit(8)
+            ->get()
+            ->map(fn (Category $c) => [
+                'title' => $c->name,
+                'description' => $c->description,
+                'url' => '/articles?category='.$c->slug,
+            ])
+            ->all();
     }
 
     /**
