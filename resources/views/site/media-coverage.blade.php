@@ -16,7 +16,7 @@
         @if ($items->isEmpty())
             <p class="empty-state mt-4">No media coverage found.</p>
         @else
-            <div class="coverage-list mt-4">@foreach ($items as $m)<x-coverage-item :item="$m" />@endforeach</div>
+            <div class="grid-cards mt-4">@foreach ($items as $m)<x-coverage-card :item="$m" />@endforeach</div>
             <div class="mt-5">{{ $items->links() }}</div>
         @endif
     </div>

@@ -22,7 +22,10 @@ class SectionData
 
         return match ($s->type) {
             'ticker' => ['articles' => Article::live()->latestFirst()->limit($limit)->get(['id', 'title', 'slug', 'published_at'])],
-            'hero' => ['stats' => ($d['show_stats'] ?? true) ? static::stats() : null],
+            'hero' => [
+                'stats' => ($d['show_stats'] ?? true) ? static::stats() : null,
+                'collage' => static::heroCollage($d),
+            ],
             'latest_articles' => ['articles' => static::articles($limit, (bool) ($d['featured_first'] ?? false))],
             'events' => ['events' => static::events($limit)],
             'videos' => ['videos' => Video::live()->with(['media', 'author'])->orderByDesc('is_featured')->latestFirst()->limit($limit)->get()],
@@ -31,6 +34,36 @@ class SectionData
             'team' => ['members' => static::team($d)],
             default => [],
         };
+    }
+
+    /**
+     * Images for the hero collage: whatever the admin uploaded, otherwise the newest
+     * gallery photographs so the banner is never empty.
+     */
+    public static function heroCollage(array $d): array
+    {
+        $uploaded = collect($d['collage_images'] ?? [])
+            ->filter()
+            ->map(fn ($path) => Site::file($path))
+            ->filter()
+            ->values();
+
+        if ($uploaded->isNotEmpty()) {
+            return $uploaded->take(3)->all();
+        }
+
+        return GalleryItem::query()
+            ->whereHas('album', fn ($query) => $query->live())
+            ->with('media')
+            ->latest('id')
+            ->limit(12)
+            ->get()
+            ->map(fn (GalleryItem $item) => $item->getFirstMediaUrl('file', 'card') ?: $item->getFirstMediaUrl('file'))
+            ->filter()
+            ->unique()
+            ->take(3)
+            ->values()
+            ->all();
     }
 
     public static function stats(): array

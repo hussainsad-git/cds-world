@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Enums\CategoryType;
 use App\Enums\ContentStatus;
 use App\Enums\TeamGroup;
+use App\Enums\VideoSource;
 use App\Models\Article;
 use App\Models\Category;
 use App\Models\Event;
@@ -14,6 +15,7 @@ use App\Models\MediaCoverage;
 use App\Models\MediaOutlet;
 use App\Models\Tag;
 use App\Models\TeamMember;
+use App\Models\Video;
 use App\Models\User;
 use Carbon\Carbon;
 use DOMDocument;
@@ -31,7 +33,7 @@ use Throwable;
 class ImportLiveSite extends Command
 {
     protected $signature = 'cds:import-live
-        {--only=* : Sections to import: articles, events, media, gallery, team}
+        {--only=* : Sections to import: articles, events, media, gallery, team, videos}
         {--limit=0 : Max records per section (0 = all shown on the live site)}
         {--no-images : Skip image downloads}
         {--fresh : Delete previously imported content before importing}';
@@ -48,13 +50,13 @@ class ImportLiveSite extends Command
     {
         $this->images = ! $this->option('no-images');
         $this->limit = (int) $this->option('limit');
-        $only = $this->option('only') ?: ['team', 'articles', 'events', 'media', 'gallery'];
+        $only = $this->option('only') ?: ['team', 'articles', 'events', 'media', 'gallery', 'videos'];
 
         if ($this->option('fresh')) {
             $this->components->warn('Clearing previously imported content');
             \Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=0');
             foreach ([
-                'media', 'gallery_items', 'gallery_albums', 'media_coverage', 'media_outlets',
+                'media', 'gallery_items', 'gallery_albums', 'media_coverage', 'media_outlets', 'videos',
                 'event_speakers', 'event_registrations', 'events', 'article_revisions', 'articles',
                 'team_members', 'categoryables', 'taggables',
             ] as $table) {
@@ -74,6 +76,7 @@ class ImportLiveSite extends Command
                 'events' => $this->events(),
                 'media' => $this->media(),
                 'gallery' => $this->gallery(),
+                'videos' => $this->videos(),
                 default => $this->components->warn("Unknown section $section"),
             };
         }
@@ -387,6 +390,85 @@ class ImportLiveSite extends Command
           } catch (Throwable $e) {
             $this->components->warn('  skipped album '.$slug.' — '.Str::limit($e->getMessage(), 110));
           }
+        }
+    }
+
+
+    /** First YouTube or Facebook video link inside a post body. */
+    private function firstVideoUrl(string $html): ?string
+    {
+        $html = html_entity_decode($html, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+        if (preg_match('~https?://(?:www\.)?(?:youtube(?:-nocookie)?\.com/(?:watch\?[^"\'<>\s]*v=|embed/|shorts/|live/)|youtu\.be/)[A-Za-z0-9_-]{11}~i', $html, $m)) {
+            return $m[0];
+        }
+
+        if (preg_match('~https?://(?:www\.)?(?:facebook\.com/[^"\'<>\s]+/videos/[0-9]+|fb\.watch/[A-Za-z0-9_-]+)~i', $html, $m)) {
+            return $m[0];
+        }
+
+        return null;
+    }
+
+    /** Posts that embed a video become Video records, newest first. */
+    private function videos(): void
+    {
+        $made = 0;
+
+        for ($page = 1; $page <= 10; $page++) {
+            $res = $this->http()->get(self::WP.'/posts', ['per_page' => 100, 'page' => $page, '_embed' => 1]);
+            $posts = $res->json();
+            if (! is_array($posts) || $posts === []) {
+                break;
+            }
+
+            foreach ($posts as $p) {
+                try {
+                    $url = $this->firstVideoUrl((string) ($p['content']['rendered'] ?? ''));
+                    if (! $url) {
+                        continue;
+                    }
+
+                    $slug = (string) $p['slug'];
+                    if (Video::withTrashed()->where('slug', $slug)->exists()) {
+                        continue;
+                    }
+
+                    $title = $this->title($this->text($p['title']['rendered']));
+                    $v = new Video([
+                        'title' => $title,
+                        'slug' => $slug,
+                        'description' => Str::limit($this->text($p['excerpt']['rendered'] ?? ''), 480, '…'),
+                        'source' => str_contains(Str::lower($url), 'facebook') || str_contains(Str::lower($url), 'fb.watch')
+                            ? VideoSource::Facebook
+                            : VideoSource::YouTube,
+                        'video_url' => $url,
+                        'status' => ContentStatus::Published,
+                        'published_at' => $this->when($p),
+                        'author_id' => $this->author($p)?->id,
+                        'thumb_alt' => $title,
+                    ]);
+                    $v->save();
+                    $this->attachTaxonomy($v, $p, CategoryType::Video, 'Interviews & Discussions');
+                    $this->attachImage($v, $this->featuredUrl($p), 'thumbnail', $title);
+                    $made++;
+                    $this->line("  + video: {$title}");
+                } catch (Throwable $e) {
+                    $this->components->warn('  skipped video '.($p['slug'] ?? '?').' — '.Str::limit($e->getMessage(), 110));
+                }
+
+                if ($this->limit && $made >= $this->limit) {
+                    return;
+                }
+            }
+
+            if (count($posts) < 100) {
+                break;
+            }
+        }
+
+        if ($made === 0) {
+            $this->components->warn('  no posts with YouTube or Facebook embeds were found');
         }
     }
 

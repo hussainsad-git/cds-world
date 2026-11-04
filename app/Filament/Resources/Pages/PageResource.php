@@ -136,6 +136,9 @@ class PageResource extends Resource
                 TextInput::make('cta_secondary.url')->label('Secondary button link'),
                 Select::make('background_type')->options(['image' => 'Image', 'video' => 'Video', 'color' => 'Solid colour'])->default('image'),
                 FileUpload::make('background_image')->image()->disk('public')->directory('sections')->maxSize(4096),
+                FileUpload::make('collage_images')->label('Banner photographs (up to 3)')->image()->multiple()->reorderable()->maxFiles(3)
+                    ->disk('public')->directory('sections')->maxSize(4096)->columnSpanFull()
+                    ->helperText('Shown beside the hero heading. Leave empty to use the newest gallery photographs automatically.'),
                 TextInput::make('background_video_url')->url()->label('Background video URL (MP4)'),
                 Toggle::make('show_stats')->label('Show counters (articles / media features / galleries)')->default(true),
             ]),
