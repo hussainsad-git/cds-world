@@ -290,7 +290,7 @@ a.chip:hover{background:var(--c-primary);color:#fff}
 .announcement{display:none}
 .hero.hero-light{background:radial-gradient(circle at 85% 20%,#dff0e4,transparent 55%),linear-gradient(180deg,#eaf6ee,#fff);color:var(--c-text)}
 .hero.hero-light:after{display:none}
-.hero-light .hero-title{color:#01411c;max-width:15ch;font-size:clamp(2.25rem,4.4vw,3.5rem);line-height:1.04;letter-spacing:-.025em}
+.hero-light .hero-title{color:#01411c;max-width:none;text-wrap:balance;font-size:clamp(2.2rem,3.9vw,3.2rem);line-height:1.06;letter-spacing:-.025em}
 .hero-light .hero-lead{color:var(--c-secondary);opacity:1;font-size:1.1rem;max-width:46ch;line-height:1.55}
 .hero-light .btn-cds{background:#01411c;color:#fff}
 .hero-light .btn-ghost{border:2px solid #01411c;color:#01411c;background:transparent}
@@ -325,9 +325,9 @@ a.chip:hover{background:var(--c-primary);color:#fff}
 .hero.has-collage .hero-inner{grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr)}
 .hero-collage{position:relative;min-height:360px}
 .hero-collage img{position:absolute;object-fit:cover;border-radius:18px;border:4px solid #fff;box-shadow:0 16px 34px rgba(1,65,28,.2);background:#eaf3ec}
-.hero-collage .hc1{width:68%;height:62%;left:0;top:0;animation:hc-float 6s ease-in-out infinite}
-.hero-collage .hc2{width:50%;height:70%;right:0;bottom:0;animation:hc-float 7s ease-in-out infinite reverse}
-.hero-collage .hc3{width:38%;height:34%;left:6%;bottom:2%;animation:hc-float 5s ease-in-out infinite}
+.hero-collage .hc1{width:62%;height:56%;left:0;top:0;animation:hc-float 6s ease-in-out infinite}
+.hero-collage .hc2{width:46%;height:62%;right:0;bottom:0;animation:hc-float 7s ease-in-out infinite reverse}
+.hero-collage .hc3{width:34%;height:32%;left:2%;bottom:0;animation:hc-float 5s ease-in-out infinite}
 @keyframes hc-float{50%{transform:translateY(-14px)}}
 .hero-stats{margin-top:1.8rem}
 @media(max-width:991px){
@@ -386,3 +386,7 @@ a.chip:hover{background:var(--c-primary);color:#fff}
 .hero + .section,.hero + .section-alt{padding-top:clamp(34px,4.2vw,58px)}
 .hero-copy{max-width:52ch}
 @media(max-width:991px){.hero-collage{min-height:280px}}
+
+/* Balanced headlines: avoids a single stranded word on the last line. */
+.section-title,.card-title,.hero-title,.page-hero h1{text-wrap:balance}
+.section-lead,.hero-lead,.card-excerpt,.page-hero .lead{text-wrap:pretty}
