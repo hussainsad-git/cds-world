@@ -73,7 +73,7 @@
         @if ($article->author)
             <aside class="author-box">
                 <div><strong>{{ $article->author->name }}</strong>@if ($article->author->designation)<span class="role">{{ $article->author->designation }}</span>@endif
-                    @if ($article->author->bio)<p>{{ $article->author->bio }}</p>@endif
+                    @if ($article->author->bio)<p>{{ trim(html_entity_decode(strip_tags($article->author->bio), ENT_QUOTES | ENT_HTML5, 'UTF-8')) }}</p>@endif
                     <a href="{{ url('/articles?author='.$article->author->id) }}">More from this author →</a></div>
             </aside>
         @endif

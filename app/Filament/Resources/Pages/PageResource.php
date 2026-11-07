@@ -177,6 +177,8 @@ class PageResource extends Resource
                 Repeater::make('items')->columns(3)->defaultItems(0)->addActionLabel('Add focus area')->schema([
                     TextInput::make('title')->required(),
                     TextInput::make('url')->label('Link'),
+                    FileUpload::make('image')->label('Picture (optional)')->image()->disk('public')->directory('sections')->maxSize(2048)
+                        ->helperText('Leave empty to show the matching icon.'),
                     Textarea::make('description')->rows(2)->columnSpanFull(),
                 ]),
             ]),
