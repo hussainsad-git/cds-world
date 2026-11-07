@@ -368,7 +368,8 @@ a.chip:hover{background:var(--c-primary);color:#fff}
 .focus-icon{width:28px;height:28px;transition:transform .3s}
 .focus-card:hover .focus-figure{background:rgba(255,255,255,.14);color:#8fe0b1}
 .focus-card:hover .focus-icon{transform:scale(1.12) rotate(-6deg)}
-.focus-card h3{min-height:2.5em;display:flex;align-items:flex-start}
+/* equal heights come from the row stretching, so the heading needs no reserved lines */
+.focus-card h3{margin:0}
 .focus-card .link-arrow{color:var(--c-secondary);margin-top:.35rem}
 .focus-card:hover .link-arrow{color:#8fe0b1}
 
