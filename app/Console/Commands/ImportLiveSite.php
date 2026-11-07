@@ -43,6 +43,12 @@ class ImportLiveSite extends Command
     private const LIVE = 'https://cdsworld.org';
     private const WP = 'https://centrefordevelopmentandstability.com/wp-json/wp/v2';
 
+    /** Source categories in the WordPress site that back each CMS section. */
+    private const CAT_ARTICLES = [54, 113, 132]; // Articles, Insight, CDS Web Desk
+    private const CAT_EVENTS = [49];
+    private const CAT_GALLERY = [70];
+    private const CAT_MEDIA = [1];
+
     private bool $images = true;
     private int $limit = 0;
 
@@ -101,15 +107,47 @@ class ImportLiveSite extends Command
         return $r->successful() ? $r->body() : '';
     }
 
-    /** @return string[] slugs linked from a live listing page, newest first. */
-    private function slugsFrom(string $path, string $prefix): array
+    /**
+     * Every published slug in the given WordPress categories, newest first.
+     *
+     * The old static listing pages are gone now that the CMS serves cdsworld.org,
+     * so the source of truth is the WordPress API itself.
+     *
+     * @param  int[]  $categories
+     * @return string[]
+     */
+    private function wpSlugs(array $categories): array
     {
         $slugs = [];
-        $html = $this->liveHtml($path);
-        preg_match_all('~href="(?:https://cdsworld\.org)?/'.$prefix.'/([^/"?\#]+)/?"~', $html, $m);
-        foreach ($m[1] as $s) {
-            $slugs[urldecode($s)] = true;
+
+        foreach ($categories as $category) {
+            for ($page = 1; $page <= 30; $page++) {
+                $res = $this->http()->get(self::WP.'/posts', [
+                    'categories' => $category,
+                    'per_page' => 100,
+                    'page' => $page,
+                    'orderby' => 'date',
+                    'order' => 'desc',
+                    '_fields' => 'slug',
+                ]);
+
+                $rows = $res->json();
+                if (! is_array($rows) || $rows === []) {
+                    break;
+                }
+
+                foreach ($rows as $row) {
+                    if (! empty($row['slug'])) {
+                        $slugs[$row['slug']] = true;
+                    }
+                }
+
+                if (count($rows) < 100) {
+                    break;
+                }
+            }
         }
+
         $slugs = array_keys($slugs);
 
         return $this->limit ? array_slice($slugs, 0, $this->limit) : $slugs;
@@ -233,7 +271,7 @@ class ImportLiveSite extends Command
 
     private function articles(): void
     {
-        foreach ($this->slugsFrom('/articles', 'articles') as $slug) {
+        foreach ($this->wpSlugs(self::CAT_ARTICLES) as $slug) {
           try {
             if (Article::withTrashed()->where('slug', $slug)->exists()) {
                 $this->line("  skip $slug");
@@ -267,7 +305,7 @@ class ImportLiveSite extends Command
 
     private function events(): void
     {
-        foreach ($this->slugsFrom('/events', 'events') as $slug) {
+        foreach ($this->wpSlugs(self::CAT_EVENTS) as $slug) {
           try {
             if (Event::withTrashed()->where('slug', $slug)->exists()) {
                 $this->line("  skip $slug");
@@ -300,7 +338,7 @@ class ImportLiveSite extends Command
 
     private function media(): void
     {
-        foreach ($this->slugsFrom('/media-coverage', 'media') as $slug) {
+        foreach ($this->wpSlugs(self::CAT_MEDIA) as $slug) {
           try {
             if (MediaCoverage::withTrashed()->where('slug', $slug)->exists()) {
                 $this->line("  skip $slug");
@@ -348,7 +386,7 @@ class ImportLiveSite extends Command
 
     private function gallery(): void
     {
-        foreach ($this->slugsFrom('/gallery', 'gallery') as $slug) {
+        foreach ($this->wpSlugs(self::CAT_GALLERY) as $slug) {
           try {
             if (GalleryAlbum::withTrashed()->where('slug', $slug)->exists()) {
                 $this->line("  skip $slug");
