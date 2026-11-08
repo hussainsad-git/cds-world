@@ -13,6 +13,7 @@ use App\Models\GalleryAlbum;
 use App\Models\GalleryItem;
 use App\Models\MediaCoverage;
 use App\Models\MediaOutlet;
+use App\Models\Page;
 use App\Models\Tag;
 use App\Models\TeamMember;
 use App\Models\Video;
@@ -22,6 +23,7 @@ use DOMDocument;
 use DOMXPath;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Throwable;
 
@@ -33,7 +35,7 @@ use Throwable;
 class ImportLiveSite extends Command
 {
     protected $signature = 'cds:import-live
-        {--only=* : Sections to import: articles, events, media, gallery, team, videos}
+        {--only=* : Sections to import: articles, events, media, gallery, team, videos, documents, pages}
         {--limit=0 : Max records per section (0 = all shown on the live site)}
         {--no-images : Skip image downloads}
         {--fresh : Delete previously imported content before importing}';
@@ -49,6 +51,12 @@ class ImportLiveSite extends Command
     private const CAT_GALLERY = [70];
     private const CAT_MEDIA = [1];
 
+    /** WordPress pages that hold real content (the rest are plugin or duplicate pages). */
+    private const WP_PAGES = [
+        'bright-future-of-balochistan',
+        'voices-of-resistance-resilience-women-across-divides',
+    ];
+
     private bool $images = true;
     private int $limit = 0;
 
@@ -56,7 +64,7 @@ class ImportLiveSite extends Command
     {
         $this->images = ! $this->option('no-images');
         $this->limit = (int) $this->option('limit');
-        $only = $this->option('only') ?: ['team', 'articles', 'events', 'media', 'gallery', 'videos'];
+        $only = $this->option('only') ?: ['team', 'articles', 'events', 'media', 'gallery', 'videos', 'documents', 'pages'];
 
         if ($this->option('fresh')) {
             $this->components->warn('Clearing previously imported content');
@@ -83,6 +91,8 @@ class ImportLiveSite extends Command
                 'media' => $this->media(),
                 'gallery' => $this->gallery(),
                 'videos' => $this->videos(),
+                'documents' => $this->documents(),
+                'pages' => $this->pages(),
                 default => $this->components->warn("Unknown section $section"),
             };
         }
@@ -507,6 +517,127 @@ class ImportLiveSite extends Command
 
         if ($made === 0) {
             $this->components->warn('  no posts with YouTube or Facebook embeds were found');
+        }
+    }
+
+
+    /** Reports, briefs and seminar decks that live only in the WordPress media library. */
+    private function documents(): void
+    {
+        $made = 0;
+
+        for ($page = 1; $page <= 5; $page++) {
+            $res = $this->http()->get(self::WP.'/media', [
+                'per_page' => 100, 'page' => $page, 'media_type' => 'application',
+                '_fields' => 'source_url,mime_type,post',
+            ]);
+            $rows = $res->json();
+            if (! is_array($rows) || $rows === []) {
+                break;
+            }
+
+            foreach ($rows as $m) {
+                $url = $m['source_url'] ?? null;
+                if (! $url) {
+                    continue;
+                }
+                $name = urldecode(basename((string) parse_url($url, PHP_URL_PATH)));
+
+                try {
+                    $owner = $this->documentOwner($m['post'] ?? null);
+
+                    if ($owner && $owner->getMedia('attachments')->contains(fn ($x) => $x->file_name === $name)) {
+                        continue;
+                    }
+                    if (! $owner && Storage::disk('public')->exists('documents/'.$name)) {
+                        continue;
+                    }
+
+                    $file = $this->http()->get($url);
+                    if (! $file->successful() || $file->body() === '') {
+                        throw new \RuntimeException('HTTP '.$file->status());
+                    }
+
+                    if ($owner) {
+                        $owner->addMediaFromString($file->body())
+                            ->usingFileName($name)
+                            ->usingName(pathinfo($name, PATHINFO_FILENAME))
+                            ->toMediaCollection('attachments');
+                        $this->line('  + document: '.$name.' -> '.class_basename($owner).' '.$owner->slug);
+                    } else {
+                        Storage::disk('public')->put('documents/'.$name, $file->body());
+                        $this->line('  + document (unattached): /storage/documents/'.$name);
+                    }
+                    $made++;
+                } catch (Throwable $e) {
+                    $this->components->warn('  skipped document '.$name.' — '.Str::limit($e->getMessage(), 100));
+                }
+            }
+
+            if (count($rows) < 100) {
+                break;
+            }
+        }
+
+        $this->components->info('  documents imported: '.$made);
+    }
+
+    /** The article or event a WordPress attachment belonged to, if we imported it. */
+    private function documentOwner(mixed $postId): Article|Event|null
+    {
+        if (! $postId) {
+            return null;
+        }
+
+        $res = $this->http()->get(self::WP.'/posts/'.$postId, ['_fields' => 'slug']);
+        $slug = $res->successful() ? ($res->json()['slug'] ?? null) : null;
+        if (! $slug) {
+            return null;
+        }
+
+        return Article::where('slug', $slug)->first() ?? Event::where('slug', $slug)->first();
+    }
+
+    /** Standalone WordPress pages that have no equivalent in the CMS. */
+    private function pages(): void
+    {
+        foreach (self::WP_PAGES as $slug) {
+            try {
+                if (Page::withTrashed()->where('slug', $slug)->exists()) {
+                    $this->line('  skip '.$slug);
+                    continue;
+                }
+
+                $res = $this->http()->get(self::WP.'/pages', ['slug' => $slug, '_embed' => 1]);
+                $rows = $res->json();
+                if (! is_array($rows) || empty($rows[0])) {
+                    $this->components->warn('  not found in source: '.$slug);
+                    continue;
+                }
+                $p = $rows[0];
+
+                $page = Page::create([
+                    'title' => $this->title($this->text($p['title']['rendered'])),
+                    'slug' => $slug,
+                    'template' => 'default',
+                    'status' => ContentStatus::Published,
+                    'published_at' => $this->when($p),
+                    'show_in_nav' => false,
+                ]);
+
+                $page->sections()->create([
+                    'type' => 'richtext',
+                    'heading' => null,
+                    'data' => ['html' => $p['content']['rendered']],
+                    'sort_order' => 0,
+                    'is_visible' => true,
+                ]);
+
+                $this->seoFrom($page, $p);
+                $this->line('  + page: '.$page->title);
+            } catch (Throwable $e) {
+                $this->components->warn('  skipped page '.$slug.' — '.Str::limit($e->getMessage(), 110));
+            }
         }
     }
 

@@ -22,6 +22,15 @@ class Article extends Model implements HasMedia
 {
     use HasCmsMedia, HasPublishing, HasSeo, HasSlug, HasTaxonomy, LogsContentActivity, SoftDeletes;
 
+    /** Research outputs editors attach: reports, briefs and seminar decks. */
+    public const DOCUMENT_MIMES = [
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.ms-powerpoint',
+        'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    ];
+
     protected $guarded = ['id'];
 
     protected array $loggedAttributes = ['title', 'status', 'published_at', 'is_featured', 'is_editors_choice', 'author_id'];
@@ -64,10 +73,7 @@ class Article extends Model implements HasMedia
         $images = ['image/jpeg', 'image/png', 'image/webp'];
         $this->addMediaCollection('featured')->singleFile()->acceptsMimeTypes($images);
         $this->addMediaCollection('gallery')->acceptsMimeTypes($images);
-        $this->addMediaCollection('attachments')->acceptsMimeTypes([
-            'application/pdf', 'application/msword',
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        ]);
+        $this->addMediaCollection('attachments')->acceptsMimeTypes(self::DOCUMENT_MIMES);
         $this->addMediaCollection('video_file')->singleFile()->acceptsMimeTypes(['video/mp4', 'video/webm']);
     }
 

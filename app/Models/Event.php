@@ -47,7 +47,7 @@ class Event extends Model implements HasMedia
         $images = ['image/jpeg', 'image/png', 'image/webp'];
         $this->addMediaCollection('banner')->singleFile()->acceptsMimeTypes($images);
         $this->addMediaCollection('gallery')->acceptsMimeTypes($images);
-        $this->addMediaCollection('attachments')->acceptsMimeTypes(['application/pdf']);
+        $this->addMediaCollection('attachments')->acceptsMimeTypes(Article::DOCUMENT_MIMES);
     }
 
     public function speakers(): HasMany
