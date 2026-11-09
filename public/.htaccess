@@ -1,3 +1,10 @@
+# This account's cPanel has no MultiPHP Manager, so the PHP version is pinned here.
+# EasyApache-specific: remove this block when deploying anywhere that is not cPanel,
+# where the handler does not exist and Apache would fail to run PHP at all.
+<FilesMatch "\.(php|php8|phtml)$">
+    SetHandler application/x-httpd-ea-php84
+</FilesMatch>
+
 <IfModule mod_rewrite.c>
     <IfModule mod_negotiation.c>
         Options -MultiViews -Indexes

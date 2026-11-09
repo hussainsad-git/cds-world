@@ -16,7 +16,12 @@ class EventController extends Controller
 {
     public function index(Request $request)
     {
-        $tab = $request->query('when', 'upcoming') === 'past' ? 'past' : 'upcoming';
+        // Default to whichever tab actually holds something. CDS runs few forward-dated
+        // events, so defaulting to "upcoming" left first-time visitors on an empty page.
+        $requested = (string) $request->query('when', '');
+        $tab = in_array($requested, ['past', 'upcoming'], true)
+            ? $requested
+            : (Event::live()->upcoming()->exists() ? 'upcoming' : 'past');
         $q = trim((string) $request->query('q', ''));
         $category = (string) $request->query('category', '');
 
