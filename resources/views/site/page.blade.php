@@ -10,7 +10,13 @@
         </header>
     @endunless
 
+    @php
+        $heroSection = $page->visibleSections->firstWhere('type', 'hero');
+        $heroShowsFocus = $heroSection && ($heroSection->data['show_focus'] ?? true);
+    @endphp
+
     @foreach ($page->visibleSections as $section)
+        @continue($heroShowsFocus && $section->type === 'research_focus')
         @php($d = $section->data ?? [])
         @includeIf('sections.'.$section->type, array_merge(['section' => $section, 'd' => $d, 'page' => $page], \App\Support\SectionData::for($section)))
     @endforeach

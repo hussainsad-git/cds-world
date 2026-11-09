@@ -27,6 +27,7 @@ class SectionData
             'hero' => [
                 'stats' => ($d['show_stats'] ?? true) ? static::stats() : null,
                 'collage' => static::heroCollage($d),
+                'focus' => static::heroFocus($s, $d),
             ],
             'research_focus' => ['items' => static::focusItems($d)],
             'latest_articles' => ['articles' => static::articles($limit, (bool) ($d['featured_first'] ?? false))],
@@ -72,6 +73,28 @@ class SectionData
                 'url' => '/articles?category='.$c->slug,
             ])
             ->all();
+    }
+
+    /**
+     * Research areas shown beside the hero statement: the hero's own items when set,
+     * otherwise whatever the page's Research Focus section holds, otherwise the live
+     * article categories. Editing Research Focus in the admin therefore updates the hero.
+     *
+     * @return array<int, array{title: string, description: ?string, url: string}>
+     */
+    public static function heroFocus(PageSection $s, array $d): array
+    {
+        if (filled($d['items'] ?? null)) {
+            return static::focusItems($d);
+        }
+
+        $sibling = PageSection::query()
+            ->where('page_id', $s->page_id)
+            ->where('type', 'research_focus')
+            ->orderBy('sort_order')
+            ->first();
+
+        return static::focusItems($sibling?->data ?? []);
     }
 
     /**
