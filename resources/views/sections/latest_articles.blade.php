@@ -12,7 +12,7 @@
             <article class="lead-article">
                 <a class="lead-link" href="{{ url('/articles/'.$lead->slug) }}">
                     @if ($lead->hasMedia('featured'))
-                        <span class="lead-media"><x-media-img :model="$lead" collection="featured" conversion="card" :alt="$lead->featured_alt ?: ''" /></span>
+                        <span class="lead-media"><x-media-img :model="$lead" collection="featured" conversion="card" sizes="(max-width: 900px) 100vw, 640px" :alt="$lead->featured_alt ?: ''" /></span>
                     @endif
                     @if ($lead->categories->first())<span class="eyebrow">{{ $lead->categories->first()->name }}</span>@endif
                     <h3 class="lead-title">{{ $lead->title }}</h3>
