@@ -1,8 +1,8 @@
 @if ($articles->isNotEmpty())
 @php
     $lead = $articles->first();
-    $column = $articles->slice(1, 4);
-    $rest = $articles->slice(5);
+    $column = $articles->slice(1, 5);
+    $rest = $articles->count() >= 9 ? $articles->slice(6) : collect();
 @endphp
 <section class="section">
     <div class="container-cds">
