@@ -440,3 +440,8 @@ a.chip:hover{background:var(--c-primary);color:#fff}
   .focus-cell{border-left:0;border-top:1px solid var(--c-rule);padding:14px 0}
   .lead-excerpt{max-width:none}
 }
+
+/* The lead carries its featured image so the two columns balance; without it a short
+   excerpt leaves most of a screen empty beside the five stacked headlines. */
+.lead-media{display:block;margin-bottom:20px;border-radius:4px;overflow:hidden;aspect-ratio:16/9;background:var(--c-bg-alt)}
+.lead-media img{width:100%;height:100%;object-fit:cover;display:block}
