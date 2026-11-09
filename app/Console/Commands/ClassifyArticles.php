@@ -20,20 +20,21 @@ use Illuminate\Support\Str;
 class ClassifyArticles extends Command
 {
     protected $signature = 'cds:classify-articles {--dry-run : Report what would change without writing}
-                                                  {--min=2 : Minimum distinct keyword hits for a theme to count}
+                                                  {--min=1 : Raise every theme\'s own minimum to at least this}
                                                   {--max=2 : Most themes to attach to one article}';
 
     protected $description = 'Assign imported articles to the thematic research categories';
 
     /** @var array<string, array<int, string>> theme slug => distinctive terms */
+    /** @var array<string, array{0: int, 1: array<int, string>}> theme slug => [minimum hits, terms] */
     private const THEMES = [
-        'cpec' => ['cpec', 'gwadar', 'belt and road', 'bri ', 'economic corridor', 'karakoram'],
-        'climate-security' => ['climate', 'glacier', 'monsoon', 'drought', 'flood', 'carbon', 'el nino', 'el niño', 'water scarcity', 'environment'],
-        'economy-energy' => ['economy', 'economic', 'energy', 'tariff', 'inflation', 'budget', 'imf', 'fiscal', 'pipeline', 'oil', 'gas ', 'trade', 'investment', 'debt', 'remittance'],
-        'regional-security' => ['terror', 'militan', 'insurgen', 'ttp', 'line of control', 'kashmir', 'proxy war', 'deterrence', 'nuclear', 'ceasefire', 'cross-border', 'baloch'],
-        'international-relations' => ['foreign policy', 'bilateral', 'diplomacy', 'diplomatic', 'united nations', 'treaty', 'alliance', 'ambassador', 'summit', 'multilateral'],
-        'development-governance' => ['governance', 'institutional', 'reform', 'corruption', 'parliament', 'judiciary', 'democracy', 'education', 'public health', 'youth'],
-        'geopolitics' => ['geopolit', 'world order', 'multipolar', 'hegemon', 'superpower', 'great power', 'realignment', 'global order', 'sphere of influence'],
+        'cpec' => [1, ['cpec', 'gwadar', 'belt and road', 'china-pakistan economic corridor', 'karakoram']],
+        'climate-security' => [2, ['climate', 'glacier', 'monsoon', 'drought', 'flood', 'carbon emission', 'water security', 'global warming', 'ecological', 'heatwave', 'environmental']],
+        'economy-energy' => [2, ['energy security', 'tariff', 'inflation', 'fiscal', 'imf', 'pipeline', 'gdp', 'exports', 'currency', 'petroleum', 'electricity', 'budget deficit', 'foreign reserves', 'economic growth', 'trade deficit', 'taxation', 'debt servicing', 'investment climate', 'industrial']],
+        'regional-security' => [2, ['terror', 'militan', 'insurgen', 'ttp', 'line of control', 'kashmir', 'proxy war', 'deterrence', 'ceasefire', 'baloch', 'cross-border', 'armed forces', 'military operation']],
+        'international-relations' => [2, ['foreign policy', 'bilateral', 'diplomacy', 'diplomatic', 'united nations', 'treaty', 'alliance', 'ambassador', 'summit', 'multilateral', 'delegation', 'envoy']],
+        'development-governance' => [2, ['governance', 'institutional reform', 'corruption', 'parliament', 'judiciary', 'democratic', 'education', 'youth', 'civil service', 'rule of law', 'public policy']],
+        'geopolitics' => [2, ['geopolit', 'geostrateg', 'world order', 'multipolar', 'hegemon', 'superpower', 'great power', 'realignment', 'global order', 'balance of power', 'strategic competition', 'sphere of influence', 'bloc']],
     ];
 
     public function handle(): int
@@ -42,12 +43,16 @@ class ClassifyArticles extends Command
         $min = max(1, (int) $this->option('min'));
         $max = max(1, (int) $this->option('max'));
 
+        // A plain slug => id map, deliberately not an Eloquent collection keyed by slug:
+        // Eloquent\Collection::only() matches PRIMARY KEYS and ignores keyBy(), so
+        // selecting by slug through only() silently returns nothing and every sync
+        // becomes a no-op that still reports success.
         $categories = Category::ofType(CategoryType::Article)
             ->whereIn('slug', array_keys(self::THEMES))
-            ->get()
-            ->keyBy('slug');
+            ->pluck('id', 'slug')
+            ->all();
 
-        $missing = array_diff(array_keys(self::THEMES), $categories->keys()->all());
+        $missing = array_diff(array_keys(self::THEMES), array_keys($categories));
         if ($missing) {
             $this->error('Missing categories: '.implode(', ', $missing));
 
@@ -62,17 +67,17 @@ class ClassifyArticles extends Command
             $categories, $dry, $min, $max, &$tally, &$unmatched, &$samples
         ) {
             foreach ($articles as $article) {
-                $hay = Str::lower(strip_tags($article->title.' '.$article->excerpt.' '.Str::limit((string) $article->body, 4000, '')));
+                $hay = Str::lower(strip_tags($article->title.' '.$article->excerpt.' '.Str::limit((string) $article->body, 6000, '')));
 
                 $scores = [];
-                foreach (self::THEMES as $slug => $terms) {
+                foreach (self::THEMES as $slug => [$floor, $terms]) {
                     $hits = 0;
                     foreach ($terms as $term) {
                         if (str_contains($hay, $term)) {
                             $hits++;
                         }
                     }
-                    if ($hits >= $min) {
+                    if ($hits >= max($floor, $min)) {
                         $scores[$slug] = $hits;
                     }
                 }
@@ -93,11 +98,11 @@ class ClassifyArticles extends Command
                     $samples[] = Str::limit($article->title, 62).'  ->  '.implode(', ', $picked);
                 }
 
-                if (! $dry) {
+                $ids = array_values(array_intersect_key($categories, array_flip($picked)));
+
+                if (! $dry && $ids) {
                     // Attach, never replace: the WordPress buckets stay as they are.
-                    $article->categories()->syncWithoutDetaching(
-                        $categories->only($picked)->pluck('id')->all()
-                    );
+                    $article->categories()->syncWithoutDetaching($ids);
                 }
             }
         });
