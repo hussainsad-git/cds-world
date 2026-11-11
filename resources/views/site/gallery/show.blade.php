@@ -8,6 +8,10 @@
 <section class="section">
     <div class="container-cds">
         <div class="masonry">
+            @if ($items->isEmpty() && $cover)
+                {{-- An album whose photos have not been added yet still shows its cover, so the page is never blank. --}}
+                <div class="masonry-item"><a class="glightbox" data-gallery="album" data-type="image" href="{{ $album->getFirstMediaUrl('cover') ?: $cover }}"><img src="{{ $cover }}" alt="{{ $album->cover_alt ?: $album->title }}" loading="lazy" decoding="async"></a></div>
+            @endif
             @foreach ($items as $it)
                 @php $full = $it->getFirstMediaUrl('file', 'large') ?: $it->getFirstMediaUrl('file'); @endphp
                 @if ($it->type === 'video')
