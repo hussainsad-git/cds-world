@@ -2,6 +2,7 @@
 <article class="coverage-item">
     <a class="coverage-thumb" href="{{ $item->url() }}" @if ($item->linksOut()) target="_blank" rel="noopener nofollow" @endif tabindex="-1" aria-hidden="true">
         <x-media-img :model="$item" collection="thumbnail" conversion="thumb" :alt="$item->thumb_alt ?: ''" ratio="4x3" />
+        @if ($item->hasVideo())<span class="card-play" aria-hidden="true"></span>@endif
     </a>
     <div class="coverage-body">
         <div class="card-meta">

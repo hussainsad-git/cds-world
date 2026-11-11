@@ -17,6 +17,7 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
@@ -74,6 +75,11 @@ class MediaCoverageResource extends Resource
                 TextInput::make('source_url')->label('Link to the original story')->url()->required()->maxLength(2048)->columnSpanFull(),
                 Textarea::make('summary')->rows(3)->maxLength(600)->columnSpanFull(),
                 RichEditor::make('body')->label('About this coverage')->helperText('Shown on the item\'s own page. Leave empty for a card that links straight to the original story.')->columnSpanFull(),
+                Repeater::make('clips')->label('Video clips')->helperText('Shown at the top of the item\'s page in place of the image. Paste a YouTube link, or the address of an uploaded video file.')
+                    ->schema([
+                        Select::make('type')->options(['youtube' => 'YouTube', 'file' => 'Video file (MP4)'])->default('youtube')->required(),
+                        TextInput::make('url')->label('Link')->required()->maxLength(2048),
+                    ])->columns(2)->defaultItems(0)->addActionLabel('Add a clip')->columnSpanFull(),
                 SpatieMediaLibraryFileUpload::make('thumbnail')->collection('thumbnail')->image()->imageEditor()->columnSpanFull(),
                 TextInput::make('thumb_alt')->label('Thumbnail alt text')->maxLength(255)->columnSpanFull(),
                 Select::make('categories')->relationship('categories', 'name', fn (Builder $query) => $query->where('type', CategoryType::MediaCoverage->value)->where('is_active', true))->multiple()->preload(),

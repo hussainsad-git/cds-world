@@ -19,7 +19,22 @@
         </div>
     </header>
 
-    @if ($image)
+    @php $clips = $item->clipList(); @endphp
+    @if ($clips)
+        {{-- Television coverage is the clip itself, so it takes the place of the still image. --}}
+        <div class="container-cds container-wide media-clips">
+            @foreach ($clips as $i => $clip)
+                @if ($clip['type'] === 'youtube')
+                    <x-video-facade :embed="'https://www.youtube-nocookie.com/embed/'.$clip['id'].'?autoplay=1&rel=0'" :thumb="'https://i.ytimg.com/vi/'.$clip['id'].'/hqdefault.jpg'" :title="$item->headline" />
+                @else
+                    <video class="article-video" controls playsinline preload="{{ $i === 0 ? 'metadata' : 'none' }}" @if ($image) poster="{{ $image }}" @endif>
+                        <source src="{{ $clip['url'] }}" type="video/mp4">
+                        <a href="{{ $clip['url'] }}">Download the video</a>
+                    </video>
+                @endif
+            @endforeach
+        </div>
+    @elseif ($image)
         <div class="container-cds container-wide"><figure class="article-hero"><a class="glightbox" data-gallery="body" data-type="image" href="{{ $item->getFirstMediaUrl('thumbnail') ?: $image }}" aria-label="Enlarge image"><img src="{{ $image }}" alt="{{ $item->thumb_alt ?: $item->headline }}" fetchpriority="high"></a></figure></div>
     @endif
 

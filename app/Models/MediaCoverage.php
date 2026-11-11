@@ -33,6 +33,7 @@ class MediaCoverage extends Model implements HasMedia
             'published_at' => 'datetime',
             'published_on' => 'date',
             'is_featured' => 'boolean',
+            'clips' => 'array',
         ];
     }
 
@@ -62,10 +63,43 @@ class MediaCoverage extends Model implements HasMedia
         return $host !== '' && ! in_array($host, $own, true);
     }
 
+    /**
+     * Playable clips, normalised for the views: YouTube entries carry the video id,
+     * file entries a URL that plays in a <video> element.
+     *
+     * @return array<int, array{type: string, id?: string, url?: string}>
+     */
+    public function clipList(): array
+    {
+        $out = [];
+        foreach ((array) $this->clips as $clip) {
+            $url = trim((string) ($clip['url'] ?? ''));
+            if ($url === '') {
+                continue;
+            }
+            if (($clip['type'] ?? '') === 'youtube') {
+                $id = preg_match('~^[A-Za-z0-9_-]{11}$~', $url) ? $url : Video::parseExternalId('youtube', $url);
+                if ($id) {
+                    $out[] = ['type' => 'youtube', 'id' => $id];
+                }
+
+                continue;
+            }
+            $out[] = ['type' => 'file', 'url' => Str::startsWith($url, ['http://', 'https://', '/']) ? $url : \App\Support\Site::file($url)];
+        }
+
+        return $out;
+    }
+
+    public function hasVideo(): bool
+    {
+        return $this->clipList() !== [];
+    }
+
     /** A card goes straight to the outlet only when this site has nothing more to show than the link. */
     public function linksOut(): bool
     {
-        return blank($this->body) && $this->hasExternalSource();
+        return blank($this->body) && ! $this->hasVideo() && $this->hasExternalSource();
     }
 
     public function url(): string
