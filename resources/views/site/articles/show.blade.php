@@ -24,7 +24,7 @@
     </header>
 
     @if ($image)
-        <div class="container-cds container-wide"><figure class="article-hero"><img src="{{ $image }}" alt="{{ $article->featured_alt ?: $article->title }}" fetchpriority="high"></figure></div>
+        <div class="container-cds container-wide"><figure class="article-hero"><a class="glightbox" data-gallery="body" data-type="image" href="{{ $article->getFirstMediaUrl('featured') ?: $image }}" aria-label="Enlarge image"><img src="{{ $image }}" alt="{{ $article->featured_alt ?: $article->title }}" fetchpriority="high"></a></figure></div>
     @endif
 
     <div class="container-cds container-prose">
@@ -42,6 +42,9 @@
         @endif
 
         <div class="prose-cds">{!! $article->body !!}</div>
+        {{-- Body and hero images open full-size, so the lightbox loads on every article. --}}
+        @pushOnce('head', 'glightbox-css')<link rel="stylesheet" href="{{ asset('vendor/glightbox.min.css') }}">@endPushOnce
+        @pushOnce('scripts', 'glightbox-js')<script src="{{ asset('vendor/glightbox.min.js') }}"></script>@endPushOnce
 
         @php $gallery = $article->getMedia('gallery'); @endphp
         @if ($gallery->isNotEmpty())
@@ -51,8 +54,6 @@
                     <a class="glightbox" data-gallery="article" href="{{ $m->getUrl('large') ?: $m->getUrl() }}"><x-media-img :url="$m->getUrl('thumb') ?: $m->getUrl()" :alt="$m->name" ratio="1x1" /></a>
                 @endforeach
             </div>
-            @push('head')<link rel="stylesheet" href="{{ asset('vendor/glightbox.min.css') }}">@endpush
-            @push('scripts')<script src="{{ asset('vendor/glightbox.min.js') }}"></script>@endpush
         @endif
 
         @php $files = $article->getMedia('attachments'); @endphp

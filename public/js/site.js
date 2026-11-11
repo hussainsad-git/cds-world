@@ -29,7 +29,25 @@
     else { var $t = $('<input>').val(url).appendTo('body').select(); document.execCommand('copy'); $t.remove(); done(); }
   });
 
-  // Lightbox
+  // Lightbox. Images inside article, event and page bodies arrive as raw HTML with no
+  // link around them, so each one is wrapped before GLightbox scans the page. Images
+  // that are already links are left alone, as are icon-sized ones.
+  if (window.GLightbox) {
+    $('.prose-cds img').each(function () {
+      var $img = $(this), w = parseInt($img.attr('width'), 10);
+      if ($img.closest('a').length || (w && w < 160) || /emoji|smiley/.test(this.className)) { return; }
+      var best = this.getAttribute('src') || '', bestW = 0;
+      ($img.attr('srcset') || '').split(',').forEach(function (c) {
+        var m = $.trim(c).match(/^(\S+)\s+(\d+)w$/);
+        if (m && parseInt(m[2], 10) > bestW) { bestW = parseInt(m[2], 10); best = m[1]; }
+      });
+      if (!best) { return; }
+      var $a = $('<a class="glightbox" data-gallery="body" data-type="image" aria-label="Enlarge image"></a>').attr('href', best);
+      var cap = $.trim($img.closest('figure').find('figcaption').text());
+      if (cap) { $a.attr('data-description', cap); }
+      $img.wrap($a);
+    });
+  }
   if (window.GLightbox && $('.glightbox').length) { GLightbox({ selector: '.glightbox', touchNavigation: true, loop: true }); }
 
   // Newsletter: progressive enhancement (works without JS as a normal POST).

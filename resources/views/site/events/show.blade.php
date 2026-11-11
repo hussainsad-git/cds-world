@@ -12,8 +12,10 @@
 <div class="container-cds mt-4">
     <div class="row g-5">
         <div class="col-lg-8">
-            @if ($image)<figure class="article-hero"><img src="{{ $image }}" alt="{{ $event->banner_alt ?: $event->title }}" fetchpriority="high"></figure>@endif
+            @if ($image)<figure class="article-hero"><a class="glightbox" data-gallery="body" data-type="image" href="{{ $event->getFirstMediaUrl('banner') ?: $image }}" aria-label="Enlarge image"><img src="{{ $image }}" alt="{{ $event->banner_alt ?: $event->title }}" fetchpriority="high"></a></figure>@endif
             <div class="prose-cds">{!! clean((string) $event->description, 'default') !!}</div>
+            @pushOnce('head', 'glightbox-css')<link rel="stylesheet" href="{{ asset('vendor/glightbox.min.css') }}">@endPushOnce
+            @pushOnce('scripts', 'glightbox-js')<script src="{{ asset('vendor/glightbox.min.js') }}"></script>@endPushOnce
 
             @if ($event->livestream_url)<p class="mt-4"><a class="btn btn-cds" href="{{ $event->livestream_url }}" target="_blank" rel="noopener">Watch the livestream</a></p>@endif
             @if ($event->video_source && $event->video_url)
@@ -39,8 +41,6 @@
             @if ($gal->isNotEmpty())
                 <h2 class="h4 mt-5">Photographs</h2>
                 <div class="gallery-strip">@foreach ($gal as $m)<a class="glightbox" data-gallery="event" href="{{ $m->getUrl('large') ?: $m->getUrl() }}"><x-media-img :url="$m->getUrl('thumb') ?: $m->getUrl()" :alt="$event->title" ratio="1x1" /></a>@endforeach</div>
-                @push('head')<link rel="stylesheet" href="{{ asset('vendor/glightbox.min.css') }}">@endpush
-                @push('scripts')<script src="{{ asset('vendor/glightbox.min.js') }}"></script>@endpush
             @endif
 
             @php $docs = $event->getMedia('attachments'); @endphp
@@ -52,7 +52,7 @@
                 <h2 class="h4 mt-5">Related coverage</h2>
                 <ul class="plain-list">
                     @foreach ($event->articles as $a)<li><a href="{{ url('/articles/'.$a->slug) }}">{{ $a->title }}</a> <small>Article</small></li>@endforeach
-                    @foreach ($event->mediaCoverage as $m)<li><a href="{{ $m->source_url }}" target="_blank" rel="noopener nofollow">{{ $m->headline }}</a> <small>{{ $m->outlet?->name }}</small></li>@endforeach
+                    @foreach ($event->mediaCoverage as $m)<li><a href="{{ $m->url() }}" @if ($m->linksOut()) target="_blank" rel="noopener nofollow" @endif>{{ $m->headline }}</a> <small>{{ $m->outlet?->name }}</small></li>@endforeach
                 </ul>
             @endif
         </div>
