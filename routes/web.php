@@ -26,6 +26,8 @@ Route::middleware('public.headers')->group(function () {
     Route::post('/events/{slug}/register', [EventController::class, 'register'])->middleware('throttle:6,1')->name('events.register');
 
     Route::get('/media-coverage', [MediaCoverageController::class, 'index'])->name('media.index');
+    // The previous site published each item at /media/{slug}; those URLs are live again.
+    Route::get('/media/{slug}', [MediaCoverageController::class, 'show'])->name('media.show');
 
     Route::get('/videos', [VideoController::class, 'index'])->name('videos.index');
     Route::get('/videos/{slug}', [VideoController::class, 'show'])->name('videos.show');

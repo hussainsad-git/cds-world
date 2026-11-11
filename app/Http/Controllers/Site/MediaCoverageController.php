@@ -49,4 +49,27 @@ class MediaCoverageController extends Controller
             'seo' => Seo::make($page, ['title' => $page?->title ?: 'Media Coverage', 'description' => $page?->excerpt, 'noindex' => $q !== '', 'jsonld' => [Schema::breadcrumb($crumbs)]]),
         ]);
     }
+
+    public function show(string $slug)
+    {
+        $item = MediaCoverage::live()->where('slug', $slug)->with(['outlet.media', 'media', 'categories', 'event', 'seo'])->firstOrFail();
+        $image = $item->getFirstMediaUrl('thumbnail', 'large') ?: ($item->getFirstMediaUrl('thumbnail') ?: null);
+        $crumbs = [['Home', '/'], ['Media coverage', '/media-coverage'], [$item->headline, '/media/'.$item->slug]];
+
+        return view('site.media-show', [
+            'item' => $item,
+            'image' => $image,
+            'crumbs' => $crumbs,
+            'related' => MediaCoverage::live()->whereKeyNot($item->getKey())->with(['outlet.media', 'media'])
+                ->orderByDesc('published_on')->limit(3)->get(),
+            'seo' => Seo::make($item, [
+                'title' => $item->headline,
+                'description' => $item->summary,
+                'image' => $image,
+                'type' => 'article',
+                'published' => $item->published_at?->toIso8601String(),
+                'jsonld' => [Schema::breadcrumb($crumbs)],
+            ]),
+        ]);
+    }
 }

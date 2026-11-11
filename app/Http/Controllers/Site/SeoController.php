@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Article;
 use App\Models\Event;
 use App\Models\GalleryAlbum;
+use App\Models\MediaCoverage;
 use App\Models\Page;
 use App\Models\Video;
 use App\Support\Site;
@@ -42,6 +43,12 @@ class SeoController extends Controller
             }
             foreach (GalleryAlbum::live()->get(['slug', 'updated_at']) as $g) {
                 $add('/gallery/'.$g->slug, $g->updated_at, 'monthly', '0.5');
+            }
+            // Only coverage with its own page; link-only items live on the outlet's site.
+            foreach (MediaCoverage::live()->get(['slug', 'updated_at', 'body', 'source_url']) as $m) {
+                if (! $m->linksOut()) {
+                    $add('/media/'.$m->slug, $m->updated_at, 'monthly', '0.4');
+                }
             }
 
             $out = '<?xml version="1.0" encoding="UTF-8"?>'."\n".'<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'."\n";
